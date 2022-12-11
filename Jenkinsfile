@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE_NAME = "gkrishn4/train-schedule"
-         CANARY_REPLICAS = 0
+        CANARY_REPLICAS = 0
     }
     stages {
         stage('Build') {
@@ -53,18 +53,19 @@ pipeline {
                 )
             }
         }
-        stage('SmokeTest'){
-            when{
+        stage('SmokeTest') {
+            when {
                 branch 'master'
             }
-            steps{
-                script{
-                    def response= httpRequest(
+            steps {
+                script {
+                    sleep (time: 5)
+                    def response = httpRequest (
                         url: "http://$KUBE_MASTER_IP:8081/",
-                        timeout: 30  
+                        timeout: 30
                     )
-                    if(response.status != 200){
-                         error("Smoke test against canary deployment failed.")
+                    if (response.status != 200) {
+                        error("Smoke test against canary deployment failed.")
                     }
                 }
             }
@@ -82,14 +83,14 @@ pipeline {
                 )
             }
         }
-        post {
-            cleanup{
-                                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )   
-            }
+    }
+    post {
+        cleanup {
+            kubernetesDeploy (
+                kubeconfigId: 'kubeconfig',
+                configs: 'train-schedule-kube-canary.yml',
+                enableConfigSubstitution: true
+            )
         }
     }
 }
